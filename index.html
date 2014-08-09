@@ -1,71 +1,208 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>D3js-bar-chart-with-delete-option by sanathp</title>
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <h1>D3js-bar-chart-with-delete-option</h1>
-        <p>d3 js bar chart with tooltips and delete option for each bar in the chart  .</p>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
 
-        <p class="view"><a href="https://github.com/sanathp/D3js-Bar-Chart-with-delete-option">View the Project on GitHub <small>sanathp/D3js-Bar-Chart-with-delete-option</small></a></p>
+<style>
 
+.bar {
+  fill: steelblue;
+}
+.glyphicon
+{
+float:right;
 
-        <ul>
-          <li><a href="https://github.com/sanathp/D3js-Bar-Chart-with-delete-option/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/sanathp/D3js-Bar-Chart-with-delete-option/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/sanathp/D3js-Bar-Chart-with-delete-option">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+}
+.bar:hover {
+  fill: brown;pp
+}
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+.axis {
+  font: 10px sans-serif;
+}
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+.x.axis path {
+  display: none;
+}
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+</style>
+<body class="container">
+<h3> A Bar Chart with Tool tips and Delete option</h3>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<br>
+<br>
+<br>
+<br>
+<div id="bargraph">
+</div>
+ <button type="submit" class="btn btn-primary" value="submit" id="redrawbutton">Redraw Original Bar Chart</button>
+</body>
+<script>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+var newdata;
+//initially new data is set to null.if user deletes a item in the bar chart then new data
+// is generated  
+window.onload = function() {
+newdata="";
+drawdata();
+};
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+//the main function which draws the bar graph
+function drawdata()
+{
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+var formatPercent = d3.format(".0%");
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/sanathp">sanathp</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(10, "");
     
-  </body>
-</html>
+    
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .attr('id','d3-tips')
+  .offset([-10, 0])
+  .html(function(d) {
+    return "<strong> Name  :</strong> <span>" + d.name + 
+    "</span><br><br> <span > <strong>Count :</strong> " + d.count + 
+    "</span> <span class=\"glyphicon glyphicon-trash\" onclick=\"changedata('"+d.name+"');\"></span>";
+   });
+  
+var svg = d3.select("#bargraph").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+svg.call(tip);
+//data.json file has data.If you want to use this graph fror your data in database
+//create a json using the data in database in the json format present in data.json file
+//and givi it as input to this function
+d3.json("data.json", function(error, data) {
+
+//data has the values from data.json file.
+//if newdata is null barchart is built with data from data.json file
+if(!newdata)
+{
+newdata=data;
+}
+else
+{
+data=newdata;
+}
+  x.domain(data.map(function(d) { return d.name; }));
+  y.domain([0, d3.max(data, function(d) { return d.count; })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Value");
+
+  svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.name); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.count); })
+      .attr("height", function(d) { return height - y(d.count); })
+	  .on('mouseover', tip.show);
+});
+
+
+function type(d) {
+  d.count = +d.count;
+  return d;
+}
+}
+
+//when user clicks on delete button this function is called
+function changedata(item) {
+
+      $("#d3-tips").remove();
+      $( "#bargraph" ).empty();
+      
+      //the deleted item will be removed from json and bar chart is redrawn with newdata
+      for(var i = newdata.length; i--;) {
+          if(newdata[i].name === item) {
+             newdata.splice(i, 1);
+          }
+      }
+      drawdata();
+  }
+
+//When redraw button is clicked the graph is built again with original data
+$('#redrawbutton').on('click', drawdatamain);
+
+function drawdatamain()
+{
+ $("#d3-tips").remove();
+$( "#bargraph" ).empty();
+      
+  newdata="";
+  drawdata();
+
+}
+
+</script>
